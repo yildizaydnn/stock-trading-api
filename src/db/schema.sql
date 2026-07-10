@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS stocks (
+  symbol VARCHAR(10) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  price BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS accounts (
+  id SERIAL PRIMARY KEY,
+  cash_balance BIGINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS holdings (
+  id SERIAL PRIMARY KEY,
+  account_id INT NOT NULL REFERENCES accounts(id),
+  symbol VARCHAR(10) NOT NULL REFERENCES stocks(symbol),
+  quantity INT NOT NULL DEFAULT 0,
+  UNIQUE(account_id, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  account_id INT NOT NULL REFERENCES accounts(id),
+  type VARCHAR(4) NOT NULL,
+  symbol VARCHAR(10) NOT NULL,
+  quantity INT NOT NULL,
+  price BIGINT NOT NULL,
+  total_amount BIGINT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
