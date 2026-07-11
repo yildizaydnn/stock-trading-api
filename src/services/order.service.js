@@ -77,4 +77,85 @@ async function buyStock(accountId, symbol, quantity) {
   }
 }
 
-module.exports = { buyStock };
+async function sellStock(accountId, symbol, quantity) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const { rows: accountRows } = await client.query(
+      "SELECT id, cash_balance FROM accounts WHERE id = $1 FOR UPDATE",
+      [accountId],
+    );
+
+    if (accountRows.length === 0) {
+      throw new AppError("Hesap bulunamadı", 404);
+    }
+
+    const { rows: stockRows } = await client.query(
+      "SELECT symbol, price FROM stocks WHERE symbol = $1",
+      [symbol],
+    );
+
+    if (stockRows.length === 0) {
+      throw new AppError("Hisse bulunamadı", 404);
+    }
+
+    const stock = stockRows[0];
+
+    const { rows: holdingRows } = await client.query(
+      "SELECT quantity FROM holdings WHERE account_id = $1 AND symbol = $2 FOR UPDATE",
+      [accountId, symbol],
+    );
+
+    if (holdingRows.length === 0 || holdingRows[0].quantity < quantity) {
+      throw new AppError("Satılacak yeterli hisse yok", 400);
+    }
+
+    const totalAmount = stock.price * quantity;
+
+    const { rows: updatedRows } = await client.query(
+      "UPDATE accounts SET cash_balance = cash_balance + $1 WHERE id = $2 RETURNING cash_balance",
+      [totalAmount, accountId],
+    );
+    const remainingBalance = updatedRows[0].cash_balance;
+
+    await client.query(
+      "UPDATE holdings SET quantity = quantity - $1 WHERE account_id = $2 AND symbol = $3",
+      [quantity, accountId, symbol],
+    );
+
+    await client.query(
+      "DELETE FROM holdings WHERE account_id = $1 AND symbol = $2 AND quantity = 0",
+      [accountId, symbol],
+    );
+
+    await client.query(
+      `INSERT INTO transactions (account_id, type, symbol, quantity, price, total_amount)
+       VALUES ($1, 'SELL', $2, $3, $4, $5)`,
+      [accountId, symbol, quantity, stock.price, totalAmount],
+    );
+
+    await client.query("COMMIT");
+
+    return {
+      type: "SELL",
+      symbol,
+      quantity,
+      price: stock.price,
+      totalAmount,
+      remainingBalance,
+    };
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("ROLLBACK hatası:", rollbackErr);
+    }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { buyStock, sellStock };

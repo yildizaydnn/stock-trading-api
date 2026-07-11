@@ -6,5 +6,6 @@ const { orderSchema } = require('../validators/order.validator');
 const router = Router();
 
 router.post('/buy', validate(orderSchema), ordersController.buy);
+router.post('/sell', validate(orderSchema), ordersController.sell);
 
 module.exports = router;
