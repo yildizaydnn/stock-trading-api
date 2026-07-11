@@ -22,6 +22,10 @@ app.get('/health', async (req, res) => {
   }
 });
 
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint bulunamadı' });
+});
+
 app.use(errorHandler);
 
 module.exports = app;
