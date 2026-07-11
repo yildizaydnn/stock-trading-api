@@ -1,0 +1,282 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Stock Trading API",
+    "description": "Mini borsa alım-satım servisi",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["System"],
+        "summary": "Sağlık kontrolü",
+        "responses": {
+          "200": {
+            "description": "Servis ve DB çalışıyor",
+            "content": {
+              "application/json": {
+                "example": { "status": "ok", "db": "up" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stocks": {
+      "get": {
+        "tags": ["Stocks"],
+        "summary": "Hisse listesi ve fiyatları",
+        "responses": {
+          "200": {
+            "description": "Hisse listesi",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "symbol": "THYAO", "name": "Türk Hava Yolları", "price": "300.00" },
+                  { "symbol": "GARAN", "name": "Garanti Bankası", "price": "130.00" },
+                  { "symbol": "ASELS", "name": "Aselsan", "price": "75.00" }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{id}": {
+      "get": {
+        "tags": ["Accounts"],
+        "summary": "Hesap ve bakiye sorgulama",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hesap bilgileri",
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": 1,
+                  "cashBalance": "100000.00",
+                  "createdAt": "2026-07-10T12:00:00.000Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hesap bulunamadı",
+            "content": {
+              "application/json": {
+                "example": { "error": "Hesap bulunamadı" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/buy": {
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Hisse alım işlemi",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["accountId", "symbol", "quantity"],
+                "properties": {
+                  "accountId": { "type": "integer", "example": 1 },
+                  "symbol": { "type": "string", "example": "THYAO" },
+                  "quantity": { "type": "integer", "minimum": 1, "example": 10 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Alım başarılı",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "BUY",
+                  "symbol": "THYAO",
+                  "quantity": 10,
+                  "price": "300.00",
+                  "totalAmount": "3000.00",
+                  "remainingBalance": "97000.00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Yetersiz bakiye veya geçersiz girdi",
+            "content": {
+              "application/json": {
+                "example": { "error": "Yetersiz bakiye" }
+              }
+            }
+          },
+          "404": {
+            "description": "Hesap veya hisse bulunamadı",
+            "content": {
+              "application/json": {
+                "example": { "error": "Hisse bulunamadı" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/sell": {
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Hisse satım işlemi",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["accountId", "symbol", "quantity"],
+                "properties": {
+                  "accountId": { "type": "integer", "example": 1 },
+                  "symbol": { "type": "string", "example": "THYAO" },
+                  "quantity": { "type": "integer", "minimum": 1, "example": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Satım başarılı",
+            "content": {
+              "application/json": {
+                "example": {
+                  "type": "SELL",
+                  "symbol": "THYAO",
+                  "quantity": 5,
+                  "price": "300.00",
+                  "totalAmount": "1500.00",
+                  "remainingBalance": "98500.00"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Yetersiz hisse veya geçersiz girdi",
+            "content": {
+              "application/json": {
+                "example": { "error": "Satılacak yeterli hisse yok" }
+              }
+            }
+          },
+          "404": {
+            "description": "Hesap veya hisse bulunamadı",
+            "content": {
+              "application/json": {
+                "example": { "error": "Hesap bulunamadı" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{id}/portfolio": {
+      "get": {
+        "tags": ["Accounts"],
+        "summary": "Portföy görüntüleme",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portföy bilgileri",
+            "content": {
+              "application/json": {
+                "example": {
+                  "holdings": [
+                    {
+                      "symbol": "THYAO",
+                      "name": "Türk Hava Yolları",
+                      "quantity": 10,
+                      "price": "300.00",
+                      "totalValue": "3000.00"
+                    }
+                  ],
+                  "totalValue": "3000.00",
+                  "cashBalance": "97000.00",
+                  "totalAssets": "100000.00"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Hesap bulunamadı",
+            "content": {
+              "application/json": {
+                "example": { "error": "Hesap bulunamadı" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{id}/transactions": {
+      "get": {
+        "tags": ["Accounts"],
+        "summary": "İşlem geçmişi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "İşlem listesi",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "id": 1,
+                    "type": "BUY",
+                    "symbol": "THYAO",
+                    "quantity": 10,
+                    "price": "300.00",
+                    "totalAmount": "3000.00",
+                    "createdAt": "2026-07-10T12:00:00.000Z"
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Hesap bulunamadı",
+            "content": {
+              "application/json": {
+                "example": { "error": "Hesap bulunamadı" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

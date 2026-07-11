@@ -4,10 +4,13 @@ const stocksRoutes = require('./routes/stocks.routes');
 const accountsRoutes = require('./routes/accounts.routes');
 const ordersRoutes = require('./routes/orders.routes');
 const errorHandler = require('./middleware/errorHandler');
+const swaggerUi = require('swagger-ui-express');
+const openApiDoc = require('./docs/openapi.json');
 
 const app = express();
 
 app.use(express.json());
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
 
 app.use('/stocks', stocksRoutes);
 app.use('/accounts', accountsRoutes);
