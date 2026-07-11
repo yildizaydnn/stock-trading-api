@@ -1,6 +1,7 @@
 const accountService = require('../services/account.service');
+const asyncHandler = require('../middleware/asyncHandler');
 
-async function getById(req, res) {
+const getById = asyncHandler(async (req, res) => {
   const account = await accountService.getAccountById(req.params.id);
 
   if (!account) {
@@ -8,6 +9,6 @@ async function getById(req, res) {
   }
 
   res.json(account);
-}
+});
 
 module.exports = { getById };

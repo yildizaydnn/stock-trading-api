@@ -2,6 +2,7 @@ const express = require('express');
 const pool = require('./db/pool');
 const stocksRoutes = require('./routes/stocks.routes');
 const accountsRoutes = require('./routes/accounts.routes');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -18,5 +19,7 @@ app.get('/health', async (req, res) => {
     res.status(500).json({ status: 'error', db: 'down' });
   }
 });
+
+app.use(errorHandler);
 
 module.exports = app;
